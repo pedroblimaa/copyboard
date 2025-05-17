@@ -1,21 +1,44 @@
 mod commands;
 
+pub mod clipboard;
+pub mod cloud;
+
+use std::sync::{Arc, Mutex};
+
+use arboard::Clipboard;
 use tauri::{
     menu::{Menu, MenuEvent, MenuItem},
     tray::TrayIconBuilder,
     App, AppHandle, Manager, Wry,
 };
 
+use clipboard::start_clipboard_watcher;
+use cloud::auth;
 use commands::greet;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    setup_clipboard();
+
     tauri::Builder::default()
-        .setup(|app| setup_tray(app))
+        .plugin(tauri_plugin_shell::init())
+        .setup(|app| setup_app(app))
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![greet])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn setup_clipboard() {
+    let clipboard = Arc::new(Mutex::new(Clipboard::new().unwrap()));
+    start_clipboard_watcher(clipboard.clone());
+}
+
+fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+    auth::open_dropbox_auth_page(app);
+    setup_tray(app)?;
+
+    Ok(())
 }
 
 fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
