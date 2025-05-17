@@ -1,11 +1,8 @@
-// use std::{error::Error, fs, io::Cursor, path::PathBuf, thread};
-
 use std::{error::Error, fs, io::Cursor, path::PathBuf, thread};
-
 use tauri::App;
 use tauri_plugin_opener::OpenerExt;
 use tiny_http::{Response, Server};
-// use tiny_http::{Response, Server};
+
 const DROPBOX_AUTH_URL: &str = "https://www.dropbox.com/oauth2/authorize?response_type=code";
 const CLIENT_ID: &str = "g4fxyhqj8y7ajbd";
 
@@ -65,7 +62,7 @@ fn load_html() -> Result<String, Box<dyn Error>> {
 
 fn get_code_from_url(url: &str) -> String {
     let query = url.split('?').nth(1).unwrap_or("");
-    
+
     let code = query
         .split('&')
         .find(|param| param.starts_with("code="))
@@ -82,4 +79,3 @@ fn get_html_response(html: String) -> Response<Cursor<Vec<u8>>> {
         .with_status_code(200)
         .with_header(header)
 }
-
