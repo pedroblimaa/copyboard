@@ -1,7 +1,10 @@
 mod commands;
-
-pub mod clipboard;
-pub mod cloud;
+pub mod models;
+pub mod services;
+pub mod config;
+pub mod adapters;
+pub mod api;
+pub mod utils;
 
 use std::sync::{Arc, Mutex};
 
@@ -12,9 +15,9 @@ use tauri::{
     App, AppHandle, Manager, Wry,
 };
 
-use clipboard::start_clipboard_watcher;
-use cloud::auth;
 use commands::greet;
+use services::auth_service;
+use services::clipboard;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -31,11 +34,11 @@ pub fn run() {
 
 fn setup_clipboard() {
     let clipboard = Arc::new(Mutex::new(Clipboard::new().unwrap()));
-    start_clipboard_watcher(clipboard.clone());
+    clipboard::start_clipboard_watcher(clipboard.clone());
 }
 
 fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-    auth::open_dropbox_auth_page(app);
+    auth_service::handle_auth(app);
     setup_tray(app)?;
 
     Ok(())
