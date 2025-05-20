@@ -1,4 +1,4 @@
-use std::{error::Error, fs, path::PathBuf};
+use std::{error::Error, fs, io::Write, path::PathBuf};
 
 use crate::models::token::TokenData;
 
@@ -15,8 +15,8 @@ pub fn create_config_if_needed() -> PathBuf {
     config_dir
 }
 
-pub fn save_token_to_file(token: TokenData) {
-    let json: String = serde_json::to_string(&token).unwrap();
+pub fn save_token_to_file(token: &TokenData) {
+    let json: String = serde_json::to_string(token).unwrap();
     let config_dir = create_config_if_needed();
     fs::write(config_dir.join(TOKEN_FILE), json).unwrap();
 }
@@ -37,4 +37,19 @@ pub fn load_html() -> Result<String, Box<dyn Error>> {
     let path = PathBuf::from("html/oauth_success.html");
 
     Ok(fs::read_to_string(&path).unwrap())
+}
+
+
+
+pub fn create_temp_file(content: &str) -> Result<fs::File, std::io::Error> {
+    let temp_dir = std::env::temp_dir();
+    let temp_file_path = temp_dir.join("clipboard.txt");
+    println!("Temp dir path: {:?}", temp_file_path);
+
+    let mut file = fs::File::create(&temp_file_path)?;
+    file.write_all(content.as_bytes())?;
+
+    let opened_file = fs::File::open(temp_file_path)?;
+
+    Ok(opened_file)
 }

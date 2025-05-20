@@ -29,3 +29,4 @@ serde = "1.0.219"
 reqwest = { version = "0.12.15", features = ["blocking", "json"] }
 serde_json = "1.0.140"
 dirs = "6.0.0"
+chrono = "0.4.41"

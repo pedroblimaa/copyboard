@@ -7,7 +7,7 @@ use crate::{
     models::token::TokenResponse,
 };
 
-pub fn create_file(access_token: &str, file: File) {
+pub fn upload_file(access_token: String, file: File) {
     let client = reqwest::blocking::Client::new();
 
     client
@@ -15,7 +15,7 @@ pub fn create_file(access_token: &str, file: File) {
         .header("Authorization", format!("Bearer {}", access_token))
         .header(
             "Dropbox-API-Arg",
-            r#"{"path":"/test.txt","mode":"add","autorename":true,"mute":false}"#,
+            r#"{"path":"/clipboard.txt","mode":"overwrite","autorename":true,"mute":false}"#,
         )
         .header("Content-Type", "application/octet-stream")
         .body(file)
@@ -34,6 +34,22 @@ pub fn login(code: String) -> Result<TokenResponse, Error> {
             ("client_id", CLIENT_ID.to_owned()),
             ("client_secret", CLIEND_SECRET.to_owned()),
             ("redirect_uri", SERVER_URL.to_owned()),
+        ])
+        .send();
+
+    res?.json()
+}
+
+pub fn refresh_token(refresh_token: String) -> Result<TokenResponse, Error> {
+    let client = reqwest::blocking::Client::new();
+
+    let res = client
+        .post("https://api.dropboxapi.com/oauth2/token")
+        .form(&[
+            ("refresh_token", refresh_token),
+            ("grant_type", "refresh_token".to_owned()),
+            ("client_id", CLIENT_ID.to_owned()),
+            ("client_secret", CLIEND_SECRET.to_owned()),
         ])
         .send();
 

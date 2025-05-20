@@ -1,4 +1,4 @@
-use std::{error::Error, fs, io::Cursor, path::PathBuf, thread};
+use std::{error::Error, io::Cursor, thread};
 use tauri::App;
 use tauri_plugin_opener::OpenerExt;
 use tiny_http::{Request, Response, Server};
@@ -6,10 +6,33 @@ use tiny_http::{Request, Response, Server};
 use crate::{adapters::auth_adapter, api::dropbox, utils::file_utils};
 
 pub fn handle_auth(app: &App) {
+    let _ = match get_token() {
+        Ok(_token) => return,
+        Err(_) => {}
+    };
+
     let auth_url: String = auth_adapter::build_dropbox_auth_url();
 
     listen_for_auth_code().unwrap();
     app.opener().open_path(auth_url, None::<&str>).unwrap();
+}
+
+pub fn get_token() -> Result<String, Box<dyn Error>> {
+    let token = file_utils::get_token_from_file()?;
+    let expires_at: i64 = token.expires_at.parse()?;
+    let refresh_token = token.refresh_token;
+
+    let time_now = chrono::Utc::now().timestamp();
+
+    if expires_at > time_now {
+        return Ok(token.access_token);
+    };
+    
+    let token_response = dropbox::refresh_token(refresh_token)?;
+    let token_data = auth_adapter::adapt_token_response(token_response);
+    file_utils::save_token_to_file(&token_data);
+
+    Ok(token_data.access_token)
 }
 
 fn listen_for_auth_code() -> Result<(), Box<dyn Error>> {
@@ -22,9 +45,6 @@ fn listen_for_auth_code() -> Result<(), Box<dyn Error>> {
             if let Some(code) = code_option {
                 println!("Code: {}", code);
                 log_in(code).unwrap();
-                push_test_file();
-
-                break;
             }
         }
     });
@@ -58,17 +78,7 @@ fn log_in(code: String) -> Result<(), Box<dyn Error>> {
     let token_response = dropbox::login(code)?;
 
     let token_data = auth_adapter::adapt_token_response(token_response);
-    file_utils::save_token_to_file(token_data);
+    file_utils::save_token_to_file(&token_data);
 
     Ok(())
-}
-
-// TODO: This should be removed, just a test push file
-fn push_test_file() {
-    let token = file_utils::get_token_from_file().unwrap();
-
-    let file_path = PathBuf::from("test.txt");
-    let file = fs::File::open(file_path).unwrap();
-
-    dropbox::create_file(&token.access_token, file);
 }
