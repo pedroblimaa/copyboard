@@ -44,7 +44,6 @@ pub fn load_html() -> Result<String, Box<dyn Error>> {
 pub fn create_temp_file(content: &str) -> Result<fs::File, std::io::Error> {
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("clipboard.txt");
-    println!("Temp dir path: {:?}", temp_file_path);
 
     let mut file = fs::File::create(&temp_file_path)?;
     file.write_all(content.as_bytes())?;

@@ -16,13 +16,11 @@ use tauri::{
 };
 
 use commands::greet;
-use services::auth_service;
+use services::{auth_service, cloud_service};
 use services::clipboard;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    setup_clipboard();
-
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| setup_app(app))
@@ -32,16 +30,20 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-fn setup_clipboard() {
-    let clipboard = Arc::new(Mutex::new(Clipboard::new().unwrap()));
-    clipboard::start_clipboard_watcher(clipboard.clone());
-}
-
 fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+    setup_tray(app)?;    
+    
     auth_service::handle_auth(app);
-    setup_tray(app)?;
+    setup_clipboard();
 
     Ok(())
+}
+
+fn setup_clipboard() {
+    let clipboard = Arc::new(Mutex::new(Clipboard::new().unwrap()));
+    let last_clipboard = Arc::new(Mutex::new(String::new()));
+    clipboard::start_clipboard_watcher(clipboard.clone(), last_clipboard.clone());
+    cloud_service::start_dropbox_file_watch();
 }
 
 fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {

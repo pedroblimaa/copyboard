@@ -77,7 +77,7 @@ fn get_html_response(html: String) -> Response<Cursor<Vec<u8>>> {
 fn log_in(code: String) -> Result<(), Box<dyn Error>> {
     let token_response = dropbox::login(code)?;
 
-    let token_data = auth_adapter::adapt_token_response(token_response);
+    let token_data: crate::models::token::TokenData = auth_adapter::adapt_token_response(token_response);
     file_utils::save_token_to_file(&token_data);
 
     Ok(())
