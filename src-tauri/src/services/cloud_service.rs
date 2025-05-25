@@ -51,10 +51,10 @@ fn handle_file_change(
     last_clipboard: SharedLastClip,
 ) {
     let token = auth_service::get_token().unwrap();
-    update_cursor(Some(&token), cursor);
     let file_content = dropbox::download_file(&token).unwrap();
 
-    println!("Clipboard updated from cloud...");
+    update_cursor(Some(&token), cursor);
+
     clipboard_service::upadate_clipboard(clipboard, last_clipboard, &file_content);
 }
 

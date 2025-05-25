@@ -61,8 +61,6 @@ fn handle_clipboard_iteration(
 
         let token = auth_service::get_token().unwrap();
 
-        println!("Uploading file...");
-
         let mut file_pushed = file_pushed.lock().unwrap();
         *file_pushed = true;
 
