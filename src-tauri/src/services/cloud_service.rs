@@ -1,3 +1,4 @@
+use core::time;
 use std::thread;
 
 use crate::{
@@ -26,7 +27,11 @@ pub fn start_dropbox_file_watch(info: StartClipboardWatcherInfo) {
         let mut cursor = get_file_response.cursor;
 
         loop {
+            let initial_timestamp = chrono::Utc::now().timestamp();
+
             let result = dropbox::longpoll(&cursor).unwrap();
+
+            println!("Longpoll result: {:?}", result);
 
             let mut file_pushed = file_pushed.lock().unwrap();
             if *file_pushed {
@@ -37,7 +42,7 @@ pub fn start_dropbox_file_watch(info: StartClipboardWatcherInfo) {
             }
 
             if result.changes {
-                handle_file_change(&mut cursor, clipboard.clone(), last_clipboard.clone());
+                handle_file_change(&mut cursor, clipboard.clone(), last_clipboard.clone(), &initial_timestamp);
             }
 
             wait_for_backoff(result.backoff);
@@ -49,16 +54,27 @@ fn handle_file_change(
     cursor: &mut String,
     clipboard: SharedClipboard,
     last_clipboard: SharedLastClip,
+    initial_timestamp: &i64,
 ) {
+    let time_passed = chrono::Utc::now().timestamp() - initial_timestamp;
+    println!("Getting token... {}", time_passed);
     let token = auth_service::get_token().unwrap();
+
+    let time_passed = chrono::Utc::now().timestamp() - initial_timestamp;
+    println!("Updating cursor... {}", time_passed);
     update_cursor(Some(&token), cursor);
+
+    let time_passed = chrono::Utc::now().timestamp() - initial_timestamp;
+    println!("Downloading file... {}", time_passed);
     let file_content = dropbox::download_file(&token).unwrap();
 
-    println!("Clipboard updated from cloud...");
+    let time_passed = chrono::Utc::now().timestamp() - initial_timestamp;
+    println!("Clipboard updated from cloud... {}", time_passed);
     clipboard_service::upadate_clipboard(clipboard, last_clipboard, &file_content);
 }
 
 fn wait_for_backoff(backoff: Option<u32>) {
+    println!("Waiting for backoff...");
     if let Some(backoff) = backoff {
         std::thread::sleep(std::time::Duration::from_secs(backoff as u64));
     }
