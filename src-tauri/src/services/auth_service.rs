@@ -27,7 +27,7 @@ pub fn get_token() -> Result<String, Box<dyn Error>> {
     if expires_at > time_now {
         return Ok(token.access_token);
     };
-    
+
     let token_response = dropbox::refresh_token(refresh_token)?;
     let token_data = auth_adapter::adapt_token_response(token_response);
     file_utils::save_token_to_file(&token_data);
@@ -43,8 +43,8 @@ fn listen_for_auth_code() -> Result<(), Box<dyn Error>> {
         for request in server.incoming_requests() {
             let code_option = handle_request_listening(request, html.clone());
             if let Some(code) = code_option {
-                println!("Code: {}", code);
                 log_in(code).unwrap();
+                break;
             }
         }
     });
@@ -77,7 +77,7 @@ fn get_html_response(html: String) -> Response<Cursor<Vec<u8>>> {
 fn log_in(code: String) -> Result<(), Box<dyn Error>> {
     let token_response = dropbox::login(code)?;
 
-    let token_data: crate::models::token::TokenData = auth_adapter::adapt_token_response(token_response);
+    let token_data = auth_adapter::adapt_token_response(token_response);
     file_utils::save_token_to_file(&token_data);
 
     Ok(())

@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::{error::Error, fs::File};
 
 use reqwest::blocking::Response;
 
@@ -29,7 +29,7 @@ pub fn upload_file(access_token: String, file: File) {
         .unwrap();
 }
 
-pub fn login(code: String) -> Result<TokenResponse, reqwest::Error> {
+pub fn login(code: String) -> Result<TokenResponse, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::new();
 
     let res = client
@@ -43,12 +43,13 @@ pub fn login(code: String) -> Result<TokenResponse, reqwest::Error> {
         ])
         .send()?;
 
-    let res = handle_response_status(res);
+    let res = handle_response_status(res)?;
+    let json_res = res.json::<TokenResponse>()?;
 
-    res.json()
+    Ok(json_res)
 }
 
-pub fn refresh_token(refresh_token: String) -> Result<TokenResponse, reqwest::Error> {
+pub fn refresh_token(refresh_token: String) -> Result<TokenResponse, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::new();
 
     let res = client
@@ -61,12 +62,15 @@ pub fn refresh_token(refresh_token: String) -> Result<TokenResponse, reqwest::Er
         ])
         .send()?;
 
-    let res = handle_response_status(res);
+    let res = handle_response_status(res)?;
+    let json_response = res.json::<TokenResponse>()?;
 
-    res.json()
+    Ok(json_response)
 }
 
-pub fn get_clipboard_file(access_token: String) -> Result<FolderResponse, reqwest::Error> {
+pub fn get_clipboard_file(
+    access_token: String,
+) -> Result<FolderResponse, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::new();
 
     let body = format!(r#"{{ "path": "{}" }}"#, FOLDER_PATH);
@@ -77,12 +81,13 @@ pub fn get_clipboard_file(access_token: String) -> Result<FolderResponse, reqwes
         .body(body)
         .send()?;
 
-    let res = handle_response_status(res);
+    let res = handle_response_status(res)?;
+    let json_res = res.json::<FolderResponse>()?;
 
-    res.json()
+    Ok(json_res)
 }
 
-pub fn longpoll(cursor: &str) -> Result<LongpollResponse, reqwest::Error> {
+pub fn longpoll(cursor: &str) -> Result<LongpollResponse, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::new();
 
     let body = serde_json::json!({
@@ -95,14 +100,31 @@ pub fn longpoll(cursor: &str) -> Result<LongpollResponse, reqwest::Error> {
         .post("https://notify.dropboxapi.com/2/files/list_folder/longpoll")
         .header("Content-Type", "application/json")
         .body(body)
-        .send()?;
+        .send();
 
-    let res = handle_response_status(res);
+    let res = match res {
+        Ok(response) => handle_response_status(response),
+        Err(e) => {
+            if e.is_timeout() {
+                return Ok(LongpollResponse {
+                    backoff: Some(0),
+                    changes: false,
+                });
+            } else {
+                Err(Box::<dyn Error>::from(e))
+            }
+        }
+    }?;
 
-    res.json()
+    let json_res: LongpollResponse = res.json()?;
+
+    Ok(json_res)
 }
 
-pub fn cursor_continue(token: &str, cursor: String) -> Result<FolderResponse, reqwest::Error> {
+pub fn cursor_continue(
+    token: &str,
+    cursor: &str,
+) -> Result<FolderResponse, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::new();
 
     let body = format!(r#"{{ "cursor": "{}" }}"#, cursor);
@@ -113,12 +135,13 @@ pub fn cursor_continue(token: &str, cursor: String) -> Result<FolderResponse, re
         .body(body)
         .send()?;
 
-    let res = handle_response_status(res);
+    let res = handle_response_status(res)?;
+    let json_res = res.json::<FolderResponse>()?;
 
-    res.json()
+    Ok(json_res)
 }
 
-pub fn download_file(token: &str) -> Result<String, reqwest::Error> {
+pub fn download_file(token: &str) -> Result<String, Box<dyn Error>> {
     let client = reqwest::blocking::Client::new();
 
     let body = format!(r#"{{ "path": "{}" }}"#, FILE_PATH);
@@ -128,19 +151,21 @@ pub fn download_file(token: &str) -> Result<String, reqwest::Error> {
         .header("Dropbox-API-Arg", body)
         .send()?;
 
-    let res = handle_response_status(res);
+    let res = handle_response_status(res)?;
 
-    res.text()
+    Ok(res.text()?)
 }
 
-pub fn handle_response_status(res: Response) -> Response {
+fn handle_response_status(res: Response) -> Result<Response, Box<dyn std::error::Error>> {
     if res.status().is_success() {
-        return res;
+        return Ok(res);
     }
 
     let status = res.status();
-    let error_message = res.text().unwrap();
-    println!("Error: {}", error_message);
+    let error_message = res.text().unwrap_or_else(|_| "Unknown error".to_string());
+    println!("Error status: {}, Message: {}", status, error_message);
 
-    panic!("{}, {}", status, error_message);
+    let error_message = format!("Error status: {}, Message: {}", status, error_message);
+
+    Err(Box::<dyn Error>::from(error_message))
 }

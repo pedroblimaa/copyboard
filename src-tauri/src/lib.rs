@@ -1,14 +1,15 @@
-mod commands;
-pub mod models;
-pub mod services;
-pub mod config;
 pub mod adapters;
 pub mod api;
+mod commands;
+pub mod config;
+pub mod models;
+pub mod services;
 pub mod utils;
 
 use std::sync::{Arc, Mutex};
 
 use arboard::Clipboard;
+use models::clipboard::StartClipboardWatcherInfo;
 use tauri::{
     menu::{Menu, MenuEvent, MenuItem},
     tray::TrayIconBuilder,
@@ -16,8 +17,8 @@ use tauri::{
 };
 
 use commands::greet;
+use services::clipboard_service;
 use services::{auth_service, cloud_service};
-use services::clipboard;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -31,8 +32,8 @@ pub fn run() {
 }
 
 fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-    setup_tray(app)?;    
-    
+    setup_tray(app)?;
+
     auth_service::handle_auth(app);
     setup_clipboard();
 
@@ -40,10 +41,14 @@ fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn setup_clipboard() {
-    let clipboard = Arc::new(Mutex::new(Clipboard::new().unwrap()));
-    let last_clipboard = Arc::new(Mutex::new(String::new()));
-    clipboard::start_clipboard_watcher(clipboard.clone(), last_clipboard.clone());
-    cloud_service::start_dropbox_file_watch();
+    let clipboard_watcher_info = StartClipboardWatcherInfo {
+        clipboard: Arc::new(Mutex::new(Clipboard::new().unwrap())),
+        last_clipboard: Arc::new(Mutex::new(String::new())),
+        file_pushed: Arc::new(Mutex::new(false)),
+    };
+
+    clipboard_service::start_clipboard_watcher(&clipboard_watcher_info);
+    cloud_service::start_dropbox_file_watch(clipboard_watcher_info);
 }
 
 fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
