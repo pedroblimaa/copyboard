@@ -22,9 +22,9 @@ pub fn save_token_to_file(token: &TokenData) {
 }
 
 pub fn get_token_from_file() -> Result<TokenData, Box<dyn Error>> {
-    let config_file = dirs::config_dir()
-        .unwrap()
-        .join("copyboard")
+    let config_dir = create_config_if_needed();
+
+    let config_file = config_dir
         .join(TOKEN_FILE);
 
     let file: String = fs::read_to_string(config_file)?;
