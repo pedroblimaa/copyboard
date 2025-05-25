@@ -3,7 +3,7 @@ use std::{error::Error, fs::File};
 use reqwest::blocking::Response;
 
 use crate::{
-    config::config::{CLIEND_SECRET, CLIENT_ID, SERVER_URL},
+    config::globals::CONFIG,
     models::{
         dropbox_file::{FolderResponse, LongpollResponse},
         token::TokenResponse,
@@ -37,9 +37,9 @@ pub fn login(code: String) -> Result<TokenResponse, Box<dyn std::error::Error>> 
         .form(&[
             ("code", code),
             ("grant_type", "authorization_code".to_owned()),
-            ("client_id", CLIENT_ID.to_owned()),
-            ("client_secret", CLIEND_SECRET.to_owned()),
-            ("redirect_uri", SERVER_URL.to_owned()),
+            ("client_id", CONFIG.client_id.to_owned()),
+            ("client_secret", CONFIG.client_secret.to_owned()),
+            ("redirect_uri", CONFIG.server_url.to_owned()),
         ])
         .send()?;
 
@@ -57,8 +57,8 @@ pub fn refresh_token(refresh_token: String) -> Result<TokenResponse, Box<dyn std
         .form(&[
             ("refresh_token", refresh_token),
             ("grant_type", "refresh_token".to_owned()),
-            ("client_id", CLIENT_ID.to_owned()),
-            ("client_secret", CLIEND_SECRET.to_owned()),
+            ("client_id", CONFIG.client_id.to_owned()),
+            ("client_secret", CONFIG.client_secret.to_owned()),
         ])
         .send()?;
 

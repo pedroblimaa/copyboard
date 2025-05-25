@@ -7,6 +7,7 @@ pub mod services;
 pub mod utils;
 
 use std::sync::{Arc, Mutex};
+use crate::config::config::AppConfig;
 
 use arboard::Clipboard;
 use models::clipboard::StartClipboardWatcherInfo;
@@ -22,7 +23,10 @@ use services::{auth_service, cloud_service};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let config = AppConfig::init();
+
     tauri::Builder::default()
+        .manage(config)
         .plugin(tauri_plugin_shell::init())
         .setup(|app| setup_app(app))
         .plugin(tauri_plugin_opener::init())
