@@ -1,7 +1,4 @@
-use core::panic;
-use std::env;
-
-use dotenv::dotenv;
+use super::local_config::{DROPBOX_KEY, DROPBOX_SECRET};
 
 const DROPBOX_AUTH_URL: &str = "https://www.dropbox.com/oauth2/authorize?response_type=code";
 const SERVER_URL: &str = "http://localhost:53682";
@@ -15,20 +12,11 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn init() -> Self {
-        dotenv().ok();
-
-        let client_id = env::var("DROPBOX_KEY").unwrap_or_else(|_| Self::handle_env_err());
-        let client_secret = env::var("DROPBOX_SECRET").unwrap_or_else(|_| Self::handle_env_err());
-
         AppConfig {
-            client_id,
-            client_secret,
+            client_id: DROPBOX_KEY.to_string(),
+            client_secret: DROPBOX_SECRET.to_string(),
             dropbox_auth_url: DROPBOX_AUTH_URL.to_string(),
             server_url: SERVER_URL.to_string(),
         }
-    }
-
-    fn handle_env_err() -> String {
-        panic!("Environment variable not found, please add DROPBOX_KEY and DROPBOX_SECRET to .env file.");
     }
 }

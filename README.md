@@ -51,6 +51,26 @@ This approach ensures that your clipboard stays synchronized across devices with
 
 ---
 
+## Configuration for Development
+Before running the app, you need to create a file named ` local_config.rs` at:
+```bash
+src-tauri/src/config/local_config.rs
+```
+This file should define the following environment variables:
+
+```rust
+pub const DROPBOX_KEY: &str = "<Dropbox app key>";
+pub const DROPBOX_SECRET: &str = "<Dropbox app secret>";
+```
+
+You can obtain these by creating an app in the [Dropbox App Console](https://www.dropbox.com/developers/apps).
+
+
+> ⚠️ This file is required **only for development** and should not be committed to version control.
+
+> Note: The console may not work on Chrome, so you may need another browser to use it.
+---
+
 ## 📈 Performance
 
 - File update: ~1s

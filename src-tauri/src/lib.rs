@@ -6,13 +6,15 @@ pub mod models;
 pub mod services;
 pub mod utils;
 
-use std::sync::{Arc, Mutex};
 use crate::config::config::AppConfig;
+use std::sync::{Arc, Mutex};
 
 use arboard::Clipboard;
 use models::clipboard::StartClipboardWatcherInfo;
 use tauri::{
-    menu::{Menu, MenuEvent, MenuItem}, tray::TrayIconBuilder, App, AppHandle, Builder, Manager, Wry
+    menu::{Menu, MenuEvent, MenuItem},
+    tray::TrayIconBuilder,
+    App, AppHandle, Builder, Manager, Wry,
 };
 
 use commands::greet;
