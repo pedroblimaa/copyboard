@@ -1,7 +1,8 @@
 use std::{error::Error, io::Cursor, thread};
+use chrono::Utc;
 use tauri::App;
 use tauri_plugin_opener::OpenerExt;
-use tiny_http::{Request, Response, Server};
+use tiny_http::{Header, Request, Response, Server};
 
 use crate::{adapters::auth_adapter::AuthAdapter, api::dropbox, utils::file_utils};
 
@@ -22,7 +23,7 @@ pub fn get_token() -> Result<String, Box<dyn Error>> {
     let expires_at: i64 = token.expires_at.parse()?;
     let refresh_token = token.refresh_token;
 
-    let time_now = chrono::Utc::now().timestamp();
+    let time_now = Utc::now().timestamp();
 
     if expires_at > time_now {
         return Ok(token.access_token);
@@ -67,7 +68,7 @@ fn handle_request_listening(request: Request, html: String) -> Option<String> {
 }
 
 fn get_html_response(html: String) -> Response<Cursor<Vec<u8>>> {
-    let header = tiny_http::Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]).unwrap();
+    let header = Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]).unwrap();
 
     Response::from_string(html)
         .with_status_code(200)

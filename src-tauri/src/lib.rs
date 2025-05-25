@@ -12,9 +12,7 @@ use crate::config::config::AppConfig;
 use arboard::Clipboard;
 use models::clipboard::StartClipboardWatcherInfo;
 use tauri::{
-    menu::{Menu, MenuEvent, MenuItem},
-    tray::TrayIconBuilder,
-    App, AppHandle, Manager, Wry,
+    menu::{Menu, MenuEvent, MenuItem}, tray::TrayIconBuilder, App, AppHandle, Builder, Manager, Wry
 };
 
 use commands::greet;
@@ -25,7 +23,7 @@ use services::{auth_service, cloud_service};
 pub fn run() {
     let config = AppConfig::init();
 
-    tauri::Builder::default()
+    Builder::default()
         .manage(config)
         .plugin(tauri_plugin_shell::init())
         .setup(|app| setup_app(app))

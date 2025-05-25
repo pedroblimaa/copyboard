@@ -1,4 +1,4 @@
-use std::thread;
+use std::{thread, time::Duration};
 
 use crate::{
     api::dropbox,
@@ -17,7 +17,7 @@ pub fn start_dropbox_file_watch(info: StartClipboardWatcherInfo) {
         let token = auth_service::get_token().unwrap_or_default();
 
         if token.is_empty() {
-            thread::sleep(std::time::Duration::from_secs(5));
+            thread::sleep(Duration::from_secs(5));
             start_dropbox_file_watch(info);
             return;
         }
@@ -60,7 +60,7 @@ fn handle_file_change(
 
 fn wait_for_backoff(backoff: Option<u32>) {
     if let Some(backoff) = backoff {
-        std::thread::sleep(std::time::Duration::from_secs(backoff as u64));
+        thread::sleep(Duration::from_secs(backoff as u64));
     }
 }
 

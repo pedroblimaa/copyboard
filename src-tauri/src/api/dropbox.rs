@@ -1,6 +1,6 @@
 use std::{error::Error, fs::File};
 
-use reqwest::blocking::Response;
+use reqwest::blocking::{Client, Response};
 
 use crate::{
     config::globals::CONFIG,
@@ -14,7 +14,7 @@ const FOLDER_PATH: &str = "";
 const FILE_PATH: &str = "/clipboard.txt";
 
 pub fn upload_file(access_token: String, file: File) {
-    let client = reqwest::blocking::Client::new();
+    let client = Client::new();
 
     client
         .post("https://content.dropboxapi.com/2/files/upload")
@@ -29,8 +29,8 @@ pub fn upload_file(access_token: String, file: File) {
         .unwrap();
 }
 
-pub fn login(code: String) -> Result<TokenResponse, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::new();
+pub fn login(code: String) -> Result<TokenResponse, Box<dyn Error>> {
+    let client = Client::new();
 
     let res = client
         .post("https://api.dropboxapi.com/oauth2/token")
@@ -49,8 +49,8 @@ pub fn login(code: String) -> Result<TokenResponse, Box<dyn std::error::Error>> 
     Ok(json_res)
 }
 
-pub fn refresh_token(refresh_token: String) -> Result<TokenResponse, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::new();
+pub fn refresh_token(refresh_token: String) -> Result<TokenResponse, Box<dyn Error>> {
+    let client = Client::new();
 
     let res = client
         .post("https://api.dropboxapi.com/oauth2/token")
@@ -70,8 +70,8 @@ pub fn refresh_token(refresh_token: String) -> Result<TokenResponse, Box<dyn std
 
 pub fn get_clipboard_file(
     access_token: String,
-) -> Result<FolderResponse, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::new();
+) -> Result<FolderResponse, Box<dyn Error>> {
+    let client = Client::new();
 
     let body = format!(r#"{{ "path": "{}" }}"#, FOLDER_PATH);
     let res = client
@@ -87,8 +87,8 @@ pub fn get_clipboard_file(
     Ok(json_res)
 }
 
-pub fn longpoll(cursor: &str) -> Result<LongpollResponse, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::new();
+pub fn longpoll(cursor: &str) -> Result<LongpollResponse, Box<dyn Error>> {
+    let client = Client::new();
 
     let body = serde_json::json!({
         "cursor": cursor,
@@ -124,8 +124,8 @@ pub fn longpoll(cursor: &str) -> Result<LongpollResponse, Box<dyn std::error::Er
 pub fn cursor_continue(
     token: &str,
     cursor: &str,
-) -> Result<FolderResponse, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::new();
+) -> Result<FolderResponse, Box<dyn Error>> {
+    let client = Client::new();
 
     let body = format!(r#"{{ "cursor": "{}" }}"#, cursor);
     let res = client
@@ -142,7 +142,7 @@ pub fn cursor_continue(
 }
 
 pub fn download_file(token: &str) -> Result<String, Box<dyn Error>> {
-    let client = reqwest::blocking::Client::new();
+    let client = Client::new();
 
     let body = format!(r#"{{ "path": "{}" }}"#, FILE_PATH);
     let res = client
@@ -156,7 +156,7 @@ pub fn download_file(token: &str) -> Result<String, Box<dyn Error>> {
     Ok(res.text()?)
 }
 
-fn handle_response_status(res: Response) -> Result<Response, Box<dyn std::error::Error>> {
+fn handle_response_status(res: Response) -> Result<Response, Box<dyn Error>> {
     if res.status().is_success() {
         return Ok(res);
     }

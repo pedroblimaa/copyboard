@@ -1,3 +1,5 @@
+use chrono::Utc;
+
 use crate::{
     config::globals::CONFIG,
     models::token::{TokenData, TokenResponse},
@@ -16,7 +18,7 @@ impl AuthAdapter {
     }
 
     pub fn adapt_token_response(token_response: TokenResponse) -> TokenData {
-        let time_now: u64 = chrono::Utc::now().timestamp() as u64;
+        let time_now: u64 = Utc::now().timestamp() as u64;
         let expires_at = time_now + token_response.expires_in.unwrap_or_default();
 
         TokenData {

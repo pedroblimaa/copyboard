@@ -1,4 +1,4 @@
-use std::{error::Error, fs, io::Write, path::PathBuf};
+use std::{env, error::Error, fs::{self, File}, io::{self, Write}, path::PathBuf};
 
 use crate::models::token::TokenData;
 
@@ -41,14 +41,14 @@ pub fn load_html() -> Result<String, Box<dyn Error>> {
 
 
 
-pub fn create_temp_file(content: &str) -> Result<fs::File, std::io::Error> {
-    let temp_dir = std::env::temp_dir();
+pub fn create_temp_file(content: &str) -> Result<File, io::Error> {
+    let temp_dir = env::temp_dir();
     let temp_file_path = temp_dir.join("clipboard.txt");
 
-    let mut file = fs::File::create(&temp_file_path)?;
+    let mut file = File::create(&temp_file_path)?;
     file.write_all(content.as_bytes())?;
 
-    let opened_file = fs::File::open(temp_file_path)?;
+    let opened_file = File::open(temp_file_path)?;
 
     Ok(opened_file)
 }
