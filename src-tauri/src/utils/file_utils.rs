@@ -34,9 +34,7 @@ pub fn get_token_from_file() -> Result<TokenData, Box<dyn Error>> {
 }
 
 pub fn load_html() -> Result<String, Box<dyn Error>> {
-    let path = PathBuf::from("html/oauth_success.html");
-
-    Ok(fs::read_to_string(&path).unwrap())
+    Ok(include_str!("../../html/oauth_success.html").to_string())
 }
 
 
